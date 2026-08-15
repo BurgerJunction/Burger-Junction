@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Burger Junction | Find Nearest Branch & Order</title>
+  <style>
+    :root { --primary: #e60000; --secondary: #ffcc00; --dark: #111; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; margin: 0; padding: 20px; text-align: center; color: #333; }
+    .card { max-width: 450px; margin: 20px auto; background: #fff; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    h1 { color: var(--primary); margin-bottom: 5px; font-size: 24px; }
+    p { color: #666; font-size: 14px; }
+    .btn { display: block; width: 100%; padding: 14px; margin: 10px 0; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; text-decoration: none; box-sizing: border-box; }
+    .btn-locate { background: var(--dark); color: #fff; }
+    .btn-order { background: var(--primary); color: #fff; display: none; }
+    .branch-info { margin: 15px 0; padding: 12px; background: #fff8e6; border: 1px solid var(--secondary); border-radius: 8px; display: none; font-weight: bold; }
+    select { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 15px; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>Burger Junction</h1>
+    <p>Find your nearest branch and get your meal delivered fast!</p>
+
+    <!-- GPS Button -->
+    <button class="btn btn-locate" onclick="findNearestBranch()">📍 Find My Nearest Branch Automatically</button>
+
+    <p style="margin: 15px 0 5px 0;">Or select manually:</p>
+    <select id="manualSelect" onchange="manualBranchSelect()">
+      <option value="">-- Choose City / Branch --</option>
+      <option value="abudhabi">Abu Dhabi</option>
+      <option value="alain">Al Ain</option>
+      <option value="sharjah">Sharjah</option>
+    </select>
+
+    <div id="branchResult" class="branch-info"></div>
+
+    <!-- Dynamic Order Buttons -->
+    <a id="orderBtnTalabat" href="#" target="_blank" class="btn btn-order" style="background:#ff5a00;">Order on Talabat</a>
+    <a id="orderBtnNoon" href="#" target="_blank" class="btn btn-order" style="background:#fbc02d; color:#000;">Order on Noon Food</a>
+  </div>
+
+  <script>
+    // Store coordinates
+    const branches = [
+      { name: "Abu Dhabi Branch", lat: 24.4539, lng: 54.3773, id: "abudhabi", talabatUrl: "https://www.talabat.com/uae", noonUrl: "https://www.noon.com/uae-en/food/" },
+      { name: "Al Ain Branch", lat: 24.2075, lng: 55.7447, id: "alain", talabatUrl: "https://www.talabat.com/uae", noonUrl: "https://www.noon.com/uae-en/food/" },
+      { name: "Sharjah Branch", lat: 25.3463, lng: 55.4209, id: "sharjah", talabatUrl: "https://www.talabat.com/uae", noonUrl: "https://www.noon.com/uae-en/food/" }
+    ];
+
+    function getDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371; // km
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+    }
+
+    function findNearestBranch() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+          const userLat = position.coords.latitude;
+          const userLng = position.coords.longitude;
+          
+          let closest = branches[0];
+          let minDistance = getDistance(userLat, userLng, branches[0].lat, branches[0].lng);
+
+          for (let i = 1; i < branches.length; i++) {
+            const dist = getDistance(userLat, userLng, branches[i].lat, branches[i].lng);
+            if (dist < minDistance) {
+              minDistance = dist;
+              closest = branches[i];
+            }
+          }
+          displayBranch(closest);
+        }, () => alert("Location permission denied. Please select your city from the dropdown."));
+      } else {
+        alert("Geolocation is not supported by your browser.");
+      }
+    }
+
+    function manualBranchSelect() {
+      const selectedId = document.getElementById('manualSelect').value;
+      const branch = branches.find(b => b.id === selectedId);
+      if (branch) displayBranch(branch);
+    }
+
+    function displayBranch(branch) {
+      document.getElementById('branchResult').style.display = 'block';
+      document.getElementById('branchResult').innerText = "Nearest Store: " + branch.name;
+      
+      const tBtn = document.getElementById('orderBtnTalabat');
+      const nBtn = document.getElementById('orderBtnNoon');
+      
+      tBtn.href = branch.talabatUrl;
+      nBtn.href = branch.noonUrl;
+      
+      tBtn.style.display = 'block';
+      nBtn.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
